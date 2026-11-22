@@ -1,0 +1,54 @@
+# Generated RAG index (rebuild with: python3 -I scripts/build_index.py)
+rag/index/
+
+# Secrets must never be committed (use environment variables / GitHub Secrets)
+.env
+.env.*
+!.env.example
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Playwright MCP output (screenshots, traces)
+reports/playwright-mcp-out/
+
+# Local Claude Code settings (per-user permissions; never commit)
+.claude/settings.local.json
+
+# Build output and dependencies (never commit; the CI job reinstalls from lockfiles)
+node_modules/
+target/
+dist/
+
+# Test and CI artifacts generated locally or in CI
+test-results/
+playwright-report/
+.pytest_cache/
+ci-artifacts/
+
+# Key material and keystores (never commit)
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.kdbx
+
+# Local environments
+venv/
+.venv/
+.env
+.env.*
+
+# Python generated files
+__pycache__/
+*.pyc
+
+# Java/Maven generated files
+target/
+
+# IDE files
+.vscode/
+.idea/

@@ -1,0 +1,12 @@
+# requirements-rag.txt
+# The local RAG pipeline (rag/pipeline, scripts/build_index.py, scripts/query_rag.py)
+# uses ONLY the Python standard library. There are no third-party packages to install
+# or pin, so no download, network access, or API key is needed.
+#
+# Verified runtime: CPython 3.14.4 (Linux x86_64).
+# Language features used are available since Python 3.9; older versions are untested.
+#
+# If a hosted model or a neural embedding model is added later, pin it HERE with an
+# exact version (for example "package==1.2.3") and record the change in the pipeline
+# manifest. Do that only after explicit approval: hosted use sends chunk text to an
+# external provider and can cost money.

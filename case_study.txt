@@ -123,7 +123,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         conn = snowflake.connector.connect(
             user='TELECOM_USER',
-            password='Password123',
+            password=os.environ['SNOWFLAKE_PASSWORD'],
             account='your_account',
             warehouse='COMPUTE_WH',
             database='TELECOM_DB',

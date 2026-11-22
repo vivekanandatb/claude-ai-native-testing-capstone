@@ -1,0 +1,253 @@
+# Quality pipeline. Written for: capstone maintainers and reviewers.
+# Documentation: docs/ci-cd.md
+#
+# Safety properties:
+# - Read-only token (contents: read). No job requests write, id-token, or admin scopes.
+# - No secrets are referenced. The application and test data are synthetic and local.
+# - No deploy, merge, or release step. Merge and release stay with human approval.
+# - pull_request runs never receive secrets (GitHub does not expose them to fork PRs).
+
+name: Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run_rag_eval:
+        description: "Run the RAG safety evaluation (deterministic, no external API, no cost)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # Stages 1-4: checkout, Java runtime, build, existing unit tests.
+  build-and-unit:
+    name: Build and unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: |
+            payment-login-java-project/pom.xml
+            starter_code/backend/pom.xml
+
+      - name: Build payment/login project
+        working-directory: payment-login-java-project
+        run: mvn -B -q compile
+
+      - name: Build catalog backend
+        working-directory: starter_code/backend
+        run: mvn -B -q compile
+
+      - name: Unit tests - payment/login project
+        working-directory: payment-login-java-project
+        run: mvn -B test
+
+      - name: Unit tests - catalog backend
+        working-directory: starter_code/backend
+        run: mvn -B test
+
+      - name: Fail if expected Java tests were not collected
+        run: |
+          python3 -I scripts/ci_check_test_count.py --min 36 payment-login-java-project/target/surefire-reports
+          python3 -I scripts/ci_check_test_count.py --min 105 starter_code/backend/target/surefire-reports
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: starter_code/frontend/package-lock.json
+
+      - name: Install frontend dependencies from lockfile
+        working-directory: starter_code/frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: starter_code/frontend
+        run: npm run build
+
+      - name: Collect and sanitize Java reports
+        if: always()
+        run: |
+          mkdir -p ci-artifacts/java
+          cp -r payment-login-java-project/target/surefire-reports ci-artifacts/java/payment 2>/dev/null || true
+          cp -r starter_code/backend/target/surefire-reports ci-artifacts/java/catalog 2>/dev/null || true
+          python3 -I scripts/ci_sanitize_reports.py ci-artifacts
+
+      - name: Upload Java reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: java-surefire-reports
+          path: ci-artifacts/java/
+          retention-days: 14
+          if-no-files-found: warn
+
+  # Stages 1, 5-12: checkout, pinned Python, dependencies, Chromium, start app,
+  # health wait, deterministic UI tests, expected-count gate, artifacts.
+  ui-smoke:
+    name: Deterministic UI smoke tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CATALOG_BASE_URL: http://localhost:5173
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: starter_code/frontend/package-lock.json
+
+      - name: Install frontend dependencies from lockfile
+        working-directory: starter_code/frontend
+        run: npm ci
+
+      - name: Set up pinned Python 3.14.4
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14.4"
+
+      - name: Install pinned test dependencies
+        run: python -m pip install -r requirements-test.txt
+
+      - name: Install Chromium and Playwright system dependencies
+        run: python -m playwright install --with-deps chromium
+
+      - name: Start frontend with its verified dev command
+        working-directory: starter_code/frontend
+        run: |
+          # setsid puts the dev server in its own process group so the cleanup step can
+          # stop vite itself, not only the npm wrapper.
+          setsid npm run dev -- --host localhost --port 5173 --strictPort \
+            > "$RUNNER_TEMP/frontend-dev.log" 2>&1 < /dev/null &
+          echo "$!" > "$RUNNER_TEMP/frontend-dev.pid"
+
+      - name: Wait for frontend health (bounded poll, no fixed sleep)
+        run: |
+          for i in $(seq 1 90); do
+            if curl -fsS --max-time 5 http://localhost:5173/ | grep -q 'id="root"'; then
+              echo "frontend healthy after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "frontend did not become healthy within 90s" >&2
+          exit 1
+
+      - name: Run deterministic UI tests
+        timeout-minutes: 10
+        run: python -m pytest
+
+      - name: Fail if expected UI tests were not collected
+        if: always()
+        run: python -I scripts/ci_check_test_count.py --min 4 test-results/junit-ui.xml
+
+      - name: Stop frontend
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/frontend-dev.pid" ]; then
+            pid="$(cat "$RUNNER_TEMP/frontend-dev.pid")"
+            kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
+          fi
+          for _ in $(seq 1 10); do
+            if ! curl -fsS --max-time 2 http://localhost:5173/ >/dev/null 2>&1; then
+              echo "frontend stopped"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "warning: port 5173 still answering after stop request" >&2
+
+      - name: Collect and sanitize UI artifacts
+        if: always()
+        run: |
+          mkdir -p ci-artifacts/ui
+          cp -r test-results/. ci-artifacts/ui/ 2>/dev/null || true
+          cp "$RUNNER_TEMP/frontend-dev.log" ci-artifacts/ui/frontend-dev.log 2>/dev/null || true
+          python -I scripts/ci_sanitize_reports.py ci-artifacts
+
+      - name: Upload UI reports, screenshots, and traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-smoke-artifacts
+          path: ci-artifacts/ui/
+          retention-days: 14
+          if-no-files-found: warn
+
+  # Stages 13-15: RAG safety evaluation. Manual dispatch only.
+  # Cost-conscious: no model API, no Ragas judge, no secrets. Runs only when a person
+  # starts it. Ragas metrics are not implemented here (see docs/ci-cd.md).
+  rag-safety-eval:
+    name: RAG safety evaluation (manual)
+    if: github.event_name == 'workflow_dispatch' && inputs.run_rag_eval
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up pinned Python 3.14.4
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14.4"
+
+      # requirements-rag.txt lists no third-party packages (stdlib only), so no pip install.
+      - name: Build local RAG index
+        run: python -I scripts/build_index.py
+
+      - name: Run required RAG cases (safety gate via exit code)
+        run: python -I scripts/query_rag.py --batch rag/eval/test_questions.jsonl --out ci-artifacts/rag/test_questions.results.jsonl
+
+      - name: Run extra RAG cases (safety gate via exit code)
+        run: python -I scripts/query_rag.py --batch rag/eval/extra_questions.jsonl --out ci-artifacts/rag/extra_questions.results.jsonl
+
+      - name: Fail if a critical safety case regressed or was removed
+        if: always()
+        run: python -I scripts/rag_safety_gate.py --min-refusals 3 ci-artifacts/rag/test_questions.results.jsonl ci-artifacts/rag/extra_questions.results.jsonl
+
+      - name: Convert RAG results to CSV
+        if: always()
+        run: |
+          python -I scripts/rag_results_to_csv.py ci-artifacts/rag/test_questions.results.jsonl ci-artifacts/rag/test_questions.results.csv
+          python -I scripts/rag_results_to_csv.py ci-artifacts/rag/extra_questions.results.jsonl ci-artifacts/rag/extra_questions.results.csv
+
+      - name: Sanitize RAG artifacts
+        if: always()
+        run: python -I scripts/ci_sanitize_reports.py ci-artifacts
+
+      - name: Upload RAG CSV and JSONL reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rag-safety-reports
+          path: ci-artifacts/rag/
+          retention-days: 30
+          if-no-files-found: warn

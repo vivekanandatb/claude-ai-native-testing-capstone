@@ -1,0 +1,61 @@
+files: ['known_defects.md', 'login_requirements.md', 'malicious_document_sample.md', 'payment_test_policy.md', 'qa_standards.md', 'release_gate.md']
+PASS exactly 6 expected files
+PASS known_defects.md: front matter complete :: {'doc_id': 'KB-DEF-001', 'version': '1.0.0', 'date': '2026-11-22'}
+PASS known_defects.md: classification is SYNTHETIC TRAINING DATA
+PASS known_defects.md: body repeats synthetic label
+PASS known_defects.md: semver version
+PASS login_requirements.md: front matter complete :: {'doc_id': 'KB-LOGIN-001', 'version': '1.0.0', 'date': '2026-11-22'}
+PASS login_requirements.md: classification is SYNTHETIC TRAINING DATA
+PASS login_requirements.md: body repeats synthetic label
+PASS login_requirements.md: semver version
+PASS malicious_document_sample.md: front matter complete :: {'doc_id': 'KB-MAL-001', 'version': '1.0.0', 'date': '2026-11-22'}
+PASS malicious_document_sample.md: classification is SYNTHETIC TRAINING DATA
+PASS malicious_document_sample.md: body repeats synthetic label
+PASS malicious_document_sample.md: semver version
+PASS payment_test_policy.md: front matter complete :: {'doc_id': 'KB-PAY-001', 'version': '1.0.0', 'date': '2026-11-22'}
+PASS payment_test_policy.md: classification is SYNTHETIC TRAINING DATA
+PASS payment_test_policy.md: body repeats synthetic label
+PASS payment_test_policy.md: semver version
+PASS qa_standards.md: front matter complete :: {'doc_id': 'KB-QA-001', 'version': '1.0.0', 'date': '2026-11-22'}
+PASS qa_standards.md: classification is SYNTHETIC TRAINING DATA
+PASS qa_standards.md: body repeats synthetic label
+PASS qa_standards.md: semver version
+PASS release_gate.md: front matter complete :: {'doc_id': 'KB-REL-001', 'version': '1.0.0', 'date': '2026-11-22'}
+PASS release_gate.md: classification is SYNTHETIC TRAINING DATA
+PASS release_gate.md: body repeats synthetic label
+PASS release_gate.md: semver version
+PASS doc_ids unique :: {'known_defects.md': 'KB-DEF-001', 'login_requirements.md': 'KB-LOGIN-001', 'malicious_document_sample.md': 'KB-MAL-001', 'payment_test_policy.md': 'KB-PAY-001', 'qa_standards.md': 'KB-QA-001', 'release_gate.md': 'KB-REL-001'}
+PASS known_defects.md: states CLAUDE.md precedence
+PASS login_requirements.md: states CLAUDE.md precedence
+PASS malicious_document_sample.md: states CLAUDE.md precedence
+PASS payment_test_policy.md: states CLAUDE.md precedence
+PASS qa_standards.md: states CLAUDE.md precedence
+PASS release_gate.md: states CLAUDE.md precedence
+PASS every referenced KB id is defined :: missing=[]
+PASS no duplicate rule IDs :: []
+PASS matrix IDs referenced exist in docs/test-matrix.md :: refs=['LOGIN-04', 'LOGIN-07', 'SEC-06', 'UI-08'] missing=[]
+PASS referenced path exists: docs/test-matrix.md
+PASS referenced path exists: reports/repository-inspection.md
+PASS no email addresses
+PASS no 13-19 digit sequences (card-like)
+PASS no phone-like numbers
+PASS no key/token-shaped strings
+PASS no 'password=' / 'secret:' assignments
+PASS no URLs to real services
+PASS synthetic demo password from repo not copied
+PASS payment: local/mock-only defined
+PASS payment: live gateways prohibited
+PASS payment: real card data prohibited
+PASS payment: decline handling
+PASS payment: timeout handling
+PASS payment: idempotency
+PASS logs: passwords/tokens/full card numbers prohibited (payment+qa)
+PASS qa: naming/assertion/locator/evidence sections
+PASS defects: each entry names regression check
+PASS release gate: deterministic + RAG gates
+PASS undocumented => unknown stated in each policy doc
+PASS malicious: contains required example
+PASS malicious: marked synthetic fixture + untrusted + no override
+PASS only malicious doc contains injection phrase
+
+OVERALL: PASS

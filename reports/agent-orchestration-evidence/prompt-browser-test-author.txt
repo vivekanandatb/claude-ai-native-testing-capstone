@@ -1,0 +1,15 @@
+Task: propose verified pytest-playwright UI tests and locators for the real frontend, and check docs/test-matrix.md section 7 (UI-01..UI-10) and RAG-02 against the source.
+You have only the Read tool; read these exact paths:
+starter_code/frontend/index.html
+starter_code/frontend/package.json
+starter_code/frontend/vite.config.js
+starter_code/frontend/src/main.jsx
+starter_code/frontend/src/App.jsx
+starter_code/frontend/src/constants.js
+starter_code/frontend/src/api/catalog.js
+starter_code/frontend/src/components/LevelFilter.jsx
+starter_code/frontend/src/components/CourseList.jsx
+starter_code/frontend/src/components/CourseCard.jsx
+starter_code/frontend/src/styles.css  (only to check focus styles / hidden content)
+docs/test-matrix.md  (section 7 and section 9)
+There are no existing frontend tests. Also state whether payment or login UI tests are possible (read the files above for any login/payment UI, mock or local test mode). Include your element inventory, proposed tests with exact quoted expected text, gaps, and required environment (pytest, playwright, browsers are NOT installed; do not assume them).

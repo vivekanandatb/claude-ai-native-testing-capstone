@@ -1,0 +1,28 @@
+Task: review docs/test-matrix.md critically against the real source. Also read docs/test-strategy.md and docs/requirements-traceability.md for context.
+Source files you may read (you have only the Read tool; read these exact paths):
+payment-login-java-project/src/main/java/com/technova/payment/auth/LoginService.java
+payment-login-java-project/src/main/java/com/technova/payment/auth/UserRepository.java
+payment-login-java-project/src/main/java/com/technova/payment/auth/User.java
+payment-login-java-project/src/main/java/com/technova/payment/Main.java
+payment-login-java-project/src/test/java/com/technova/payment/auth/LoginServiceTest.java
+starter_code/backend/src/main/java/com/globallearning/lms/catalog/web/CourseController.java
+starter_code/backend/src/main/java/com/globallearning/lms/catalog/web/EnrollmentController.java
+starter_code/backend/src/main/java/com/globallearning/lms/catalog/web/LearnerController.java
+starter_code/backend/src/main/java/com/globallearning/lms/catalog/web/CatalogExceptionHandler.java
+starter_code/backend/src/main/java/com/globallearning/lms/catalog/web/EnrollmentExceptionHandler.java
+starter_code/backend/src/main/java/com/globallearning/lms/catalog/web/dto/CourseUpdateRequest.java
+starter_code/backend/src/main/java/com/globallearning/lms/catalog/web/dto/ArchiveRequest.java
+starter_code/backend/src/main/java/com/globallearning/lms/catalog/web/dto/EnrollmentCreateRequest.java
+starter_code/backend/src/main/java/com/globallearning/lms/catalog/web/mapper/CourseMapper.java
+starter_code/backend/src/main/java/com/globallearning/lms/catalog/service/CourseService.java
+starter_code/backend/src/main/java/com/globallearning/lms/catalog/service/EnrollmentService.java
+starter_code/backend/src/main/java/com/globallearning/lms/catalog/service/LegacyCourseCodeParser.java
+starter_code/backend/src/main/java/com/globallearning/lms/catalog/config/SecurityConfig.java
+starter_code/backend/src/main/java/com/globallearning/lms/catalog/audit/CatalogAuditLogger.java
+starter_code/backend/src/main/resources/db/migration/V5__create_learners_and_enrollments.sql
+starter_code/backend/src/test/java/com/globallearning/lms/catalog/CourseControllerTest.java
+starter_code/frontend/src/App.jsx
+starter_code/frontend/src/components/LevelFilter.jsx
+starter_code/frontend/src/components/CourseList.jsx
+starter_code/frontend/src/components/CourseCard.jsx
+Deliver: (1) matrix rows with wrong or unverifiable evidence/expectations (cite path:line), (2) missing login/validation/payment/abuse/regression scenarios, (3) rows that overclaim, (4) unknowns, (5) what you could not verify. Do not claim any test was run.

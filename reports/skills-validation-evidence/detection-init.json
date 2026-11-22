@@ -1,0 +1,17 @@
+{
+  "claude_code_version": "2.1.126",
+  "model": "claude-sonnet-4-6",
+  "skills": [
+    "update-config",
+    "debug",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "loop",
+    "claude-api",
+    "playwright-author",
+    "rag-evaluation",
+    "test-plan"
+  ],
+  "permissionMode": "default"
+}
