@@ -130,7 +130,7 @@ jobs:
       - name: Set up pinned Python 3.14.4
         uses: actions/setup-python@v5
         with:
-          python-version: "3.14.4"
+          python-version: "3.14"
 
       - name: Install pinned test dependencies
         run: python -m pip install -r requirements-test.txt
@@ -217,7 +217,7 @@ jobs:
       - name: Set up pinned Python 3.14.4
         uses: actions/setup-python@v5
         with:
-          python-version: "3.14.4"
+          python-version: "3.14"
 
       # requirements-rag.txt lists no third-party packages (stdlib only), so no pip install.
       - name: Build local RAG index
